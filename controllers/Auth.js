@@ -5,10 +5,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
+// Controller to handle sending OTP
 exports.sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
 
+    // Check if a user with the given email already exists
     const checkUser = await User.findOne({ email: email });
     if (checkUser) {
       return res
@@ -16,6 +18,7 @@ exports.sendOtp = async (req, res) => {
         .json({ message: "Email already exists", success: false });
     }
 
+    // Generate a 6-digit numeric OTP
     var generatedOtp = otpGenerator.genrate(6, {
       upperCase: false,
       specialChars: false,
@@ -23,8 +26,7 @@ exports.sendOtp = async (req, res) => {
     });
     console.log("OTP Generated: ", otp);
 
-    //check unique OTP or NOT
-
+    // Ensure the OTP is unique
     const result = await otp.findOne({ otp: generatedOtp });
     while (result) {
       generatedOtp = otpGenerator.genrate(6, {
@@ -34,12 +36,13 @@ exports.sendOtp = async (req, res) => {
       });
       result = await otp.findOne({ otp: generatedOtp });
     }
-    const otpPayload = { email, otp: generatedOtp };
 
-    //create an entry in Otp
+    // Create an entry in the OTP database
+    const otpPayload = { email, otp: generatedOtp };
     const otpBody = await otp.create(otpPayload);
     console.log(otpBody);
-    //return response
+
+    // Return a success response
     res.status(200).json({
       success: true,
       message: "OTP sent Successfully",
@@ -47,13 +50,16 @@ exports.sendOtp = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+
+    // Handle errors and return a failure response
     return res.status(500).json({
       success: false,
-      message: ("error accured try again", error.message),
+      message: `Error occurred: ${error.message}`,
     });
   }
 };
 
+// Controller to handle user sign-up
 exports.signUp = async (req, res) => {
   try {
     const {
@@ -66,8 +72,8 @@ exports.signUp = async (req, res) => {
       contactNumber,
       otp,
     } = req.body;
-    //validate data
 
+    // Validate required fields
     if (
       !firstName ||
       !lastName ||
@@ -83,32 +89,31 @@ exports.signUp = async (req, res) => {
       });
     }
 
-    //match password
-
+    // Ensure passwords match
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
-        message: "Password do not match",
+        message: "Passwords do not match",
       });
     }
-    //check user exist
+
+    // Check if a user with the given email already exists
     const existUser = await User.findOne({ email: email });
     if (existUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exist",
+        message: "User already exists",
       });
     }
 
-    //check otp
-
+    // Retrieve the most recent OTP for the provided email
     const recentOtp = await otp
       .findOne({ email: email })
       .sort({ createdAt: -1 })
       .limit(1);
     console.log("Recent OTP: ", recentOtp);
 
-    //otp validation
+    // Validate the OTP
     if (recentOtp.otp !== otp) {
       return res.status(400).json({
         success: false,
@@ -121,10 +126,10 @@ exports.signUp = async (req, res) => {
       });
     }
 
-    //hash password
+    // Hash the user's password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    //create user
+    // Create a default profile for the user
     const profileDetails = await Profile.create({
       gender: null,
       dateOfBirth: null,
@@ -132,6 +137,7 @@ exports.signUp = async (req, res) => {
       contactNumber: null,
     });
 
+    // Create the user
     const user = await User.create({
       firstName,
       lastName,
@@ -143,7 +149,7 @@ exports.signUp = async (req, res) => {
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}+${lastName}&background=%23f0f0f0`,
     });
 
-    //return response
+    // Return a success response with user details
     res.status(200).json({
       success: true,
       message: "User created successfully",
@@ -151,80 +157,83 @@ exports.signUp = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+
+    // Handle errors and return a failure response
     return res.status(500).json({
       success: false,
-      message: ("error accured try again", error.message),
+      message: `Error occurred: ${error.message}`,
     });
   }
-  // Login
+};
 
-  exports.login = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      //get data
+// Controller to handle user login
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-      //data validation
-      if (!email || !password) {
-        return res.status(400).json({
-          success: false,
-          message: "All fields are required",
-        });
-      }
-      //check user exist
-      const user = await User.findOne({ email }).populate("additionalDetails");
-      if (!user) {
-        return res.status(400).json({
-          success: false,
-          message: "User does not exist",
-        });
-      }
-
-      //token generation
-      if (await bcrypt.compare(password, user.password)) {
-        const payload = {
-          user: {
-            email: user.email,
-            id: user._id,
-            role: user.role,
-          },
-        };
-        const token = JsonWebTokenError.sign(payload, process.env.JWT_SECRET, {
-          expiresIn: "2h",
-        });
-        user.token = token;
-        user.password = undefined;
-
-        //password match
-        //create cookie
-        const otpions = {
-          expires: new Date(
-            Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-          ), 
-          httpOnly: true,
-        };
-        res.cookie("token", token, otpions).status(200).json({
-          success: true,
-          message: "User Logged in successfully",
-          token,
-          user,
-        });
-      } else {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid Credentials",
-        });
-      }
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({
         success: false,
-        message: ("error accured try again", error.message),
+        message: "All fields are required",
       });
     }
-  };
 
-  //change password
- // Change Password
+    // Check if the user exists
+    const user = await User.findOne({ email }).populate("additionalDetails");
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User does not exist",
+      });
+    }
+
+    // Validate the password
+    if (await bcrypt.compare(password, user.password)) {
+      const payload = {
+          email: user.email,
+          id: user._id,
+          accountType: user.accountType,
+      };
+
+      // Generate a JWT token
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "2h",
+      });
+      user.token = token;
+      user.password = undefined;
+
+      // Set the token in a cookie
+      const options = {
+        expires: new Date(
+          Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+        ),
+        httpOnly: true,
+      };
+      res.cookie("token", token, options).status(200).json({
+        success: true,
+        message: "User logged in successfully",
+        token,
+        user,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+
+    // Handle errors and return a failure response
+    return res.status(500).json({
+      success: false,
+      message: `Error occurred: ${error.message}`,
+    });
+  }
+};
+
+// Controller to handle password change
 exports.changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword, confirmPassword } = req.body;
@@ -241,7 +250,7 @@ exports.changePassword = async (req, res) => {
     }
 
     // Validate old password
-    const isMatch = await user.comparePassword(oldPassword);
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({
         success: false,
@@ -249,7 +258,7 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    // Validate new password and confirm password match
+    // Ensure the new password matches the confirmation password
     if (newPassword !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -257,25 +266,29 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    // Update password
-    user.password = newPassword;
+    // Update the user's password
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    // Send email or notification (pseudo-code)
-   await sendEmail(user.email, "Password Updated Successfully", "Your password has been updated.");
+    // Notify the user via email
+    await sendEmail(
+      user.email,
+      "Password Updated Successfully",
+      "Your password has been updated."
+    );
 
-    // Respond with success
+    // Return a success response
     return res.status(200).json({
       success: true,
       message: "Password updated successfully",
     });
   } catch (error) {
     console.log(error);
+
+    // Handle errors and return a failure response
     return res.status(500).json({
       success: false,
       message: `An error occurred: ${error.message}`,
     });
   }
-};
-
 };
