@@ -32,7 +32,7 @@ exports.createCourse = async (req, res) => {
     const instructorDetails = await User.findById(userId);
     console.log("instructorDetails", instructorDetails);
     //TODO verify that userid is an instructor
-    
+
     if (!instructorDetails) {
       return res.status(404).json({
         success: false,
@@ -115,8 +115,8 @@ exports.showAllCourses = async (req, res) => {
         studentsEnrolled: true,
       }
     )
-    .populate("instructor", "name email")
-    .exec();
+      .populate("instructor", "name email")
+      .exec();
 
     return res.status(200).json({
       success: true,
