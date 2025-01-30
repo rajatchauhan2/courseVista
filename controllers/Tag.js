@@ -1,4 +1,4 @@
-const tag = require('../models/Tag');
+const tag = require('../models/tags.models');
 
 
 
