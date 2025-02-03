@@ -1,4 +1,7 @@
-const express = require("express");
+const express = require("express")
+const app = express();
 
-const config = require("./config/db.config");
-const routes = require("./routes/user.routes");
+const userRoutes =("./routes/User")
+const profileRoutes = require("./routes/Profile");
+const paymentRoutes = require ("./routes/Payments")
+const courseRoutes = require ("./")
