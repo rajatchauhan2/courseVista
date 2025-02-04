@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/user.models");
 require("dotenv").config();
 const mailSender = require("../utils/mailSender");
 

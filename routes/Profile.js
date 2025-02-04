@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { auth } = require("../middleware/auth");
+const { auth } = require("../middlewares/Auth.js");
 const {
   deleteAccount,
   updateProfile,
   getAllUserDetails,
   updateDisplayPicture,
   getEnrolledCourses,
-} = require("../controllers/Profile");
+} = require("../controllers/profile.js");
 
 // ********************************************************************************************************
 //                                      Profile routes

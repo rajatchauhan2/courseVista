@@ -45,7 +45,7 @@ const {
   isInstructor,
   isStudent,
   isAdmin,
-} = require("../middleware/auth");
+} = require("../middlewares/Auth");
 
 // ********************************************************************************************************
 //                                      Course routes

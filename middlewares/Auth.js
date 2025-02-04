@@ -1,9 +1,11 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-const User = require("../models/User");
+// skipcq: JS-0128
+const User = require("../models/user.models");
 
 // Middleware to authenticate user requests
+// skipcq: JS-0116
 const auth = async (req, res, next) => {
   try {
     // Retrieve the token from cookies or Authorization header
@@ -47,13 +49,13 @@ const auth = async (req, res, next) => {
 // Middleware to check if the user is a student
 exports.isStudent = async (req, res, next) => {
   try {
-        if(req.user.accountType !== "Student") {
-            return res.status(403).json({
-                success: false,
-                message: "This is Protected route for student only",
-            });
-        }
-        next();
+    if (req.user.accountType !== "Student") {
+      return res.status(403).json({
+        success: false,
+        message: "This is Protected route for student only",
+      });
+    }
+    next();
   } catch (error) {
     // Handle unexpected errors and return a generic error response
     return res.status(500).json({
@@ -62,21 +64,18 @@ exports.isStudent = async (req, res, next) => {
     });
   }
 };
-
-
 
 //isInstructor
 
-
 exports.isInstructor = async (req, res, next) => {
   try {
-        if(req.user.accountType !== "Instructor") {
-            return res.status(403).json({
-                success: false,
-                message: "This is Protected route for Instructor only",
-            });
-        }
-        next();
+    if (req.user.accountType !== "Instructor") {
+      return res.status(403).json({
+        success: false,
+        message: "This is Protected route for Instructor only",
+      });
+    }
+    next();
   } catch (error) {
     // Handle unexpected errors and return a generic error response
     return res.status(500).json({
@@ -85,19 +84,18 @@ exports.isInstructor = async (req, res, next) => {
     });
   }
 };
-
 
 //isAdmin
 
 exports.isAdmin = async (req, res, next) => {
   try {
-        if(req.user.accountType !== "Admin") {
-            return res.status(403).json({
-                success: false,
-                message: "This is Protected route for Admin only",
-            });
-        }
-        next();
+    if (req.user.accountType !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "This is Protected route for Admin only",
+      });
+    }
+    next();
   } catch (error) {
     // Handle unexpected errors and return a generic error response
     return res.status(500).json({
@@ -106,8 +104,5 @@ exports.isAdmin = async (req, res, next) => {
     });
   }
 };
-
-
-
 
 module.exports = auth;

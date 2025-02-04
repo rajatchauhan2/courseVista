@@ -8,7 +8,7 @@ const {
   isInstructor,
   isStudent,
   isAdmin,
-} = require("../middleware/auth");
+} = require("../middlewares/Auth");
 router.post("/capturePayment", auth, isStudent, capturePayment);
 router.post("/verifySignature", verifySignature);
 

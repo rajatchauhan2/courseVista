@@ -1,5 +1,7 @@
-const Profile = require("../models/Profile");
-const User = require("../models/User");
+const Profile = require("../models/profile.models");
+const User = require("../models/user.models");
+console.log(controllers);  // Should log an object with updateProfile
+console.log(controllers.updateProfile); 
 
 exports.updateProfile = async (req, res) => {
   try {
