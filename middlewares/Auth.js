@@ -1,108 +1,101 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-
 // skipcq: JS-0128
 const User = require("../models/user.models");
 
-// Middleware to authenticate user requests
+//auth
 // skipcq: JS-0116
-const auth = async (req, res, next) => {
+exports.auth = async (req, res, next) => {
   try {
-    // Retrieve the token from cookies or Authorization header
+    //extract token
     const token =
-      req.cookies.token || req.header("Authorization").replace("Bearer ", "");
+      req.cookies.token ||
+      req.body.token ||
+      req.header("Authorisation").replace("Bearer ", "");
 
-    // Check if the token is provided
+    //if token missing, then return response
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized Access",
+        message: "TOken is missing",
       });
     }
 
-    // Verify the token's validity
+    //verify the token
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log(decoded);
-
-      // Attach decoded user information to the request object
-      req.user = decoded;
-    } catch (error) {
-      // Return error response if token is invalid
+      const decode = jwt.verify(token, process.env.JWT_SECRET);
+      console.log(decode);
+      req.user = decode;
+    } catch (err) {
+      //verification - issue
       return res.status(401).json({
         success: false,
-        message: "Invalid Token",
+        message: "token is invalid",
       });
     }
-
-    // Move to the next middleware or route handler
     next();
   } catch (error) {
-    // Handle unexpected errors and return a generic error response
-    return res.status(500).json({
+    return res.status(401).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Something went wrong while validating the token",
     });
   }
 };
 
-// Middleware to check if the user is a student
+//isStudent
+// skipcq: JS-0116
 exports.isStudent = async (req, res, next) => {
   try {
     if (req.user.accountType !== "Student") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
-        message: "This is Protected route for student only",
+        message: "This is a protected route for Students only",
       });
     }
     next();
   } catch (error) {
-    // Handle unexpected errors and return a generic error response
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "User role cannot be verified, please try again",
     });
   }
 };
 
 //isInstructor
-
+// skipcq: JS-0116
 exports.isInstructor = async (req, res, next) => {
   try {
     if (req.user.accountType !== "Instructor") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
-        message: "This is Protected route for Instructor only",
+        message: "This is a protected route for Instructor only",
       });
     }
     next();
   } catch (error) {
-    // Handle unexpected errors and return a generic error response
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "User role cannot be verified, please try again",
     });
   }
 };
 
 //isAdmin
-
+// skipcq: JS-0045, JS-0116
 exports.isAdmin = async (req, res, next) => {
   try {
+    console.log("Printing AccountType ", req.user.accountType);
     if (req.user.accountType !== "Admin") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
-        message: "This is Protected route for Admin only",
+        message: "This is a protected route for Admin only",
       });
     }
     next();
   } catch (error) {
-    // Handle unexpected errors and return a generic error response
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "User role cannot be verified, please try again",
     });
   }
 };
-
-module.exports = auth;
