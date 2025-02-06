@@ -1,59 +1,70 @@
 const express = require("express");
 const app = express();
 
+console.log("🚀 Server is starting...");
+
+// Import routes and dependencies
 const userRoutes = require("./routes/User");
 const profileRoutes = require("./routes/Profile");
 const paymentRoutes = require("./routes/Payments");
 const courseRoutes = require("./routes/Course");
 
-const database = require("./config/database");
+const database = require("./config/db.config");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const {cloudinaryConnect } = require("./config/cloudinary");
+const { cloudinaryConnect } = require("./config/cloudinary");
 const fileUpload = require("express-fileupload");
 const dotenv = require("dotenv");
 
 dotenv.config();
 const PORT = process.env.PORT || 4000;
 
-//database connect
-database.connect();
-//middlewares
+// Connect to database
+console.log("🗄️ Connecting to database...");
+database
+  .connect()
+  .then(() => console.log("✅ Database connected successfully"))
+  .catch((err) => console.error("❌ Database connection failed:", err));
+
+// Middleware setup
 app.use(express.json());
 app.use(cookieParser());
+
+console.log("🔄 Setting up middleware...");
 app.use(
-	cors({
-		origin:"http://localhost:3000",
-		credentials:true,
-	})
-)
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 app.use(
-	fileUpload({
-		useTempFiles:true,
-		tempFileDir:"/tmp",
-	})
-)
-//cloudinary connection
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp",
+  })
+);
+
+// Cloudinary connection
+console.log("☁️ Connecting to Cloudinary...");
 cloudinaryConnect();
 
-//routes
+// Define routes
+console.log("🚏 Setting up routes...");
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/profile", profileRoutes);
 app.use("/api/v1/course", courseRoutes);
 app.use("/api/v1/payment", paymentRoutes);
 
-
-//def route
-
+// Default route
 app.get("/", (req, res) => {
-	return res.json({
-		success:true,
-		message:'Your server is up and running....'
-	});
+  return res.json({
+    success: true,
+    message: "Your server is up and running....",
+  });
 });
 
+// Start server
 app.listen(PORT, () => {
-	console.log(`App is running at ${PORT}`)
-})
-
+  console.log(`✅ App is running at http://localhost:${PORT}`);
+});
