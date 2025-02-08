@@ -1,5 +1,6 @@
 const User = require("../models/user.models");
-const otp = require("../models/otp.models");
+const Otp = require("../models/otp.models");
+const Profile = require("../models/profile.models");
 const otpGenerator = require("otp-generator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -10,39 +11,32 @@ exports.sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Check if a user with the given email already exists
-    const checkUser = await User.findOne({ email: email });
+    const checkUser = await User.findOne({ email });
     if (checkUser) {
-      return res
-        .status(400)
-        .json({ message: "Email already exists", success: false });
+      return res.status(400).json({ message: "Email already exists", success: false });
     }
 
-    // Generate a 6-digit numeric OTP
-    var generatedOtp = otpGenerator.genrate(6, {
+    let generatedOtp = otpGenerator.generate(6, {
       upperCase: false,
       specialChars: false,
       lowerCase: false,
     });
-    console.log("OTP Generated: ", otp);
+    console.log("OTP Generated: ", generatedOtp);
 
-    // Ensure the OTP is unique
-    const result = await otp.findOne({ otp: generatedOtp });
+    let result = await Otp.findOne({ otp: generatedOtp });
     while (result) {
-      generatedOtp = otpGenerator.genrate(6, {
+      generatedOtp = otpGenerator.generate(6, {  // ✅ Fixed typo
         upperCase: false,
         specialChars: false,
         lowerCase: false,
       });
-      result = await otp.findOne({ otp: generatedOtp });
+      result = await Otp.findOne({ otp: generatedOtp });
     }
 
-    // Create an entry in the OTP database
     const otpPayload = { email, otp: generatedOtp };
-    const otpBody = await otp.create(otpPayload);
+    const otpBody = await Otp.create(otpPayload);  // ✅ Fix: Use `Otp.create()`
     console.log(otpBody);
 
-    // Return a success response
     res.status(200).json({
       success: true,
       message: "OTP sent Successfully",
@@ -50,14 +44,13 @@ exports.sendOtp = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-
-    // Handle errors and return a failure response
     return res.status(500).json({
       success: false,
       message: `Error occurred: ${error.message}`,
     });
   }
 };
+
 
 // Controller to handle user sign-up
 exports.signUp = async (req, res) => {
@@ -70,10 +63,9 @@ exports.signUp = async (req, res) => {
       confirmPassword,
       accountType,
       contactNumber,
-      otp,
+      Otp: userOtp,  // ✅ Rename to avoid conflict with model
     } = req.body;
 
-    // Validate required fields
     if (
       !firstName ||
       !lastName ||
@@ -81,7 +73,7 @@ exports.signUp = async (req, res) => {
       !password ||
       !confirmPassword ||
       !contactNumber ||
-      !otp
+      !userOtp  // ✅ Use renamed variable
     ) {
       return res.status(400).json({
         success: false,
@@ -89,7 +81,6 @@ exports.signUp = async (req, res) => {
       });
     }
 
-    // Ensure passwords match
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -97,8 +88,7 @@ exports.signUp = async (req, res) => {
       });
     }
 
-    // Check if a user with the given email already exists
-    const existUser = await User.findOne({ email: email });
+    const existUser = await User.findOne({ email });
     if (existUser) {
       return res.status(400).json({
         success: false,
@@ -106,30 +96,21 @@ exports.signUp = async (req, res) => {
       });
     }
 
-    // Retrieve the most recent OTP for the provided email
-    const recentOtp = await otp
-      .findOne({ email: email })
-      .sort({ createdAt: -1 })
-      .limit(1);
+    // ✅ Fetch recent OTP and fix naming issue
+    const recentOtp = await Otp.findOne({ email }).sort({ createdAt: -1 });
+
     console.log("Recent OTP: ", recentOtp);
 
-    // Validate the OTP
-    if (recentOtp.otp !== otp) {
+    // ✅ Correct OTP field name (recentOtp.otp, not recentOtp.Otp)
+    if (!recentOtp || recentOtp.otp !== userOtp) {
       return res.status(400).json({
         success: false,
-        message: "Invalid OTP",
-      });
-    } else if (otp !== recentOtp.otp) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP expired",
+        message: "Invalid or expired OTP",
       });
     }
 
-    // Hash the user's password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a default profile for the user
     const profileDetails = await Profile.create({
       gender: null,
       dateOfBirth: null,
@@ -137,7 +118,6 @@ exports.signUp = async (req, res) => {
       contactNumber: null,
     });
 
-    // Create the user
     const user = await User.create({
       firstName,
       lastName,
@@ -149,7 +129,6 @@ exports.signUp = async (req, res) => {
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}+${lastName}&background=%23f0f0f0`,
     });
 
-    // Return a success response with user details
     res.status(200).json({
       success: true,
       message: "User created successfully",
@@ -157,14 +136,13 @@ exports.signUp = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-
-    // Handle errors and return a failure response
     return res.status(500).json({
       success: false,
       message: `Error occurred: ${error.message}`,
     });
   }
 };
+
 
 // Controller to handle user login
 exports.login = async (req, res) => {
@@ -207,9 +185,10 @@ exports.login = async (req, res) => {
       const options = {
         expires: new Date(
           Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-        ),
+        ),  
         httpOnly: true,
       };
+      console.log("JWT_COOKIE_EXPIRE:", process.env.JWT_COOKIE_EXPIRE);
       res.cookie("token", token, options).status(200).json({
         success: true,
         message: "User logged in successfully",
