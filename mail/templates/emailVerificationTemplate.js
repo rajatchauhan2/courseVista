@@ -66,8 +66,8 @@ const otpTemplate = (otp) => {
 	
 	<body>
 		<div class="container">
-			<a href=""><img class="logo"
-					src="https://i.ibb.co/7Xyj3PC/logo.png" alt="CourseVista Logo"></a>
+			<a href="https://files.oaiusercontent.com/file-CKWhJDSKd3F5GqdKfwwnZL?se=2025-02-09T17%3A05%3A33Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D563bcb16-4446-4975-ab0c-e3a31d7099eb.webp&sig=ZlfQYxr2rYIdLNMnZ5CgJciq26qUdJICUbfYDZk4qG4%3D"><img class="logo"
+					src="https://files.oaiusercontent.com/file-CKWhJDSKd3F5GqdKfwwnZL?se=2025-02-09T17%3A05%3A33Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D563bcb16-4446-4975-ab0c-e3a31d7099eb.webp&sig=ZlfQYxr2rYIdLNMnZ5CgJciq26qUdJICUbfYDZk4qG4%3D" alt="CourseVista Logo"></a>
 			<div class="message">OTP Verification Email</div>
 			<div class="body">
 				<p>Dear User,</p>
