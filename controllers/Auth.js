@@ -13,7 +13,9 @@ exports.sendOtp = async (req, res) => {
 
     const checkUser = await User.findOne({ email });
     if (checkUser) {
-      return res.status(400).json({ message: "Email already exists", success: false });
+      return res
+        .status(400)
+        .json({ message: "Email already exists", success: false });
     }
 
     let generatedOtp = otpGenerator.generate(6, {
@@ -25,7 +27,8 @@ exports.sendOtp = async (req, res) => {
 
     let result = await Otp.findOne({ otp: generatedOtp });
     while (result) {
-      generatedOtp = otpGenerator.generate(6, {  // ✅ Fixed typo
+      generatedOtp = otpGenerator.generate(6, {
+        // ✅ Fixed typo
         upperCase: false,
         specialChars: false,
         lowerCase: false,
@@ -34,7 +37,7 @@ exports.sendOtp = async (req, res) => {
     }
 
     const otpPayload = { email, otp: generatedOtp };
-    const otpBody = await Otp.create(otpPayload);  // ✅ Fix: Use `Otp.create()`
+    const otpBody = await Otp.create(otpPayload); // ✅ Fix: Use `Otp.create()`
     console.log(otpBody);
 
     res.status(200).json({
@@ -51,7 +54,6 @@ exports.sendOtp = async (req, res) => {
   }
 };
 
-
 // Controller to handle user sign-up
 exports.signUp = async (req, res) => {
   try {
@@ -63,7 +65,7 @@ exports.signUp = async (req, res) => {
       confirmPassword,
       accountType,
       contactNumber,
-      Otp: userOtp,  // ✅ Rename to avoid conflict with model
+      Otp: userOtp, // ✅ Rename to avoid conflict with model
     } = req.body;
 
     if (
@@ -73,7 +75,7 @@ exports.signUp = async (req, res) => {
       !password ||
       !confirmPassword ||
       !contactNumber ||
-      !userOtp  // ✅ Use renamed variable
+      !userOtp // ✅ Use renamed variable
     ) {
       return res.status(400).json({
         success: false,
@@ -143,7 +145,6 @@ exports.signUp = async (req, res) => {
   }
 };
 
-
 // Controller to handle user login
 exports.login = async (req, res) => {
   try {
@@ -169,9 +170,9 @@ exports.login = async (req, res) => {
     // Validate the password
     if (await bcrypt.compare(password, user.password)) {
       const payload = {
-          email: user.email,
-          id: user._id,
-          accountType: user.accountType,
+        email: user.email,
+        id: user._id,
+        accountType: user.accountType,
       };
 
       // Generate a JWT token
@@ -185,7 +186,7 @@ exports.login = async (req, res) => {
       const options = {
         expires: new Date(
           Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-        ),  
+        ),
         httpOnly: true,
       };
       console.log("JWT_COOKIE_EXPIRE:", process.env.JWT_COOKIE_EXPIRE);
