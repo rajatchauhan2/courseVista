@@ -1,0 +1,21 @@
+MONGO_URI = mongodb://localhost:27017/CourseVista
+PORT = 5000
+MAIL_HOST =smtp.gmail.com
+MAIL_USER =rajatchauhan8954@gmail.com
+MAIL_PASS =pqkvteausqtifyji
+
+
+JWT_SECRET = rajat
+CLIENT_URL =CourseVista
+
+FOLDER_NAME = tempFiles
+
+RAZORPAY_KEY =rzp_test_GI3UyNA7Lb648i
+RAZORPAY_SECRET =Lvy6lkA8URYHPKz7JXnMdnTM
+
+CLOUD_NAME =CourseVista
+API_KEY =558465916266543
+API_SECRET =el1vKOtlTVZrivaQ-7G-ITwnR2M
+
+
+JWT_COOKIE_EXPIRE=1
