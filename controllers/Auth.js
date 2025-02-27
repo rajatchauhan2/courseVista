@@ -56,6 +56,14 @@ exports.sendOtp = async (req, res) => {
 
 // Controller to handle user sign-up
 exports.signUp = async (req, res) => {
+  console.log("📩 Received Signup Data in Backend:", req.body); // Debugging
+
+  if (Object.keys(req.body).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Request body is empty!",
+    });
+  }
   try {
     const {
       firstName,
@@ -80,8 +88,10 @@ exports.signUp = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
+        receivedData: req.body, // Debugging
       });
     }
+    console.log("✅ Backend received all fields"); // Debugging
 
     if (password !== confirmPassword) {
       return res.status(400).json({

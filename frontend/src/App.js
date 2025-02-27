@@ -36,9 +36,11 @@ import { getUserDetails } from "./services/operations/profileAPI"
 import { ACCOUNT_TYPE } from "./utils/constants"
 
 function App() {
+    
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.profile)
+  console.log(process.env.REACT_APP_API_URL);
 
   useEffect(() => {
     if (localStorage.getItem("token")) {
