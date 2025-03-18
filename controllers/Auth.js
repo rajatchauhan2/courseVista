@@ -56,15 +56,8 @@ exports.sendOtp = async (req, res) => {
 
 // Controller to handle user sign-up
 exports.signUp = async (req, res) => {
-  console.log("📩 Received Signup Data in Backend:", req.body); // Debugging
-
-  if (Object.keys(req.body).length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Request body is empty!",
-    });
-  }
   try {
+    // Destructure fields from the request body
     const {
       firstName,
       lastName,
@@ -73,87 +66,96 @@ exports.signUp = async (req, res) => {
       confirmPassword,
       accountType,
       contactNumber,
-      Otp: userOtp, // ✅ Rename to avoid conflict with model
-    } = req.body;
-
+      otp,
+    } = req.body
+    // Check if All Details are there or not
     if (
       !firstName ||
       !lastName ||
       !email ||
       !password ||
       !confirmPassword ||
-      !contactNumber ||
-      !userOtp // ✅ Use renamed variable
+      !otp
     ) {
-      return res.status(400).json({
+      return res.status(403).send({
         success: false,
-        message: "All fields are required",
-        receivedData: req.body, // Debugging
-      });
+        message: "All Fields are required",
+      })
     }
-    console.log("✅ Backend received all fields"); // Debugging
-
+    // Check if password and confirm password match
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
-        message: "Passwords do not match",
-      });
+        message:
+          "Password and Confirm Password do not match. Please try again.",
+      })
     }
 
-    const existUser = await User.findOne({ email });
-    if (existUser) {
+    // Check if user already exists
+    const existingUser = await User.findOne({ email })
+    if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
-      });
+        message: "User already exists. Please sign in to continue.",
+      })
     }
 
-    // ✅ Fetch recent OTP and fix naming issue
-    const recentOtp = await Otp.findOne({ email }).sort({ createdAt: -1 });
-
-    console.log("Recent OTP: ", recentOtp);
-
-    // ✅ Correct OTP field name (recentOtp.otp, not recentOtp.Otp)
-    if (!recentOtp || recentOtp.otp !== userOtp) {
+    // Find the most recent OTP for the email
+    const response = await Otp.find({ email }).sort({ createdAt: -1 }).limit(1)
+    console.log(response)
+    if (response.length === 0) {
+      // OTP not found for the email
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired OTP",
-      });
+        message: "The OTP is not valid",
+      })
+    } else if (otp !== response[0].otp) {
+      // Invalid OTP
+      return res.status(400).json({
+        success: false,
+        message: "The OTP is not valid",
+      })
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10)
 
+    // Create the user
+    let approved = ""
+    approved === "Instructor" ? (approved = false) : (approved = true)
+
+    // Create the Additional Profile For User
     const profileDetails = await Profile.create({
       gender: null,
       dateOfBirth: null,
       about: null,
       contactNumber: null,
-    });
-
+    })
     const user = await User.create({
       firstName,
       lastName,
       email,
-      password: hashedPassword,
-      accountType,
       contactNumber,
+      password: hashedPassword,
+      accountType: accountType,
+      approved: approved,
       additionalDetails: profileDetails._id,
-      image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}+${lastName}&background=%23f0f0f0`,
-    });
+      image: "",
+    })
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "User created successfully",
-      data: user,
-    });
+      user,
+      message: "User registered successfully",
+    })
   } catch (error) {
-    console.log(error);
+    console.error(error)
     return res.status(500).json({
       success: false,
-      message: `Error occurred: ${error.message}`,
-    });
+      message: "User cannot be registered. Please try again.",
+    })
   }
-};
+}
 
 // Controller to handle user login
 exports.login = async (req, res) => {

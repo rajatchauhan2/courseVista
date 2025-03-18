@@ -55,23 +55,18 @@ export function signUp(
   return async (dispatch) => {
     const toastId = toast.loading("Loading...")
     dispatch(setLoading(true))
-
-    const requestData = {
-      accountType,
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword,
-      otp,
-    }
-
-    console.log("📤 Sending Signup Request:", requestData) // Debugging
-
     try {
-      const response = await apiConnector("POST", SIGNUP_API, requestData)
+      const response = await apiConnector("POST", SIGNUP_API, {
+        accountType,
+        firstName,
+        lastName,
+        email,
+        password,
+        confirmPassword,
+        otp,
+      })
 
-      console.log("✅ SIGNUP API RESPONSE:", response)
+      console.log("SIGNUP API RESPONSE............", response)
 
       if (!response.data.success) {
         throw new Error(response.data.message)
@@ -79,8 +74,7 @@ export function signUp(
       toast.success("Signup Successful")
       navigate("/login")
     } catch (error) {
-      console.error("❌ SIGNUP API ERROR:", error)
-      console.error("❌ API Response Data:", error.response?.data); // Debugging
+      console.log("SIGNUP API ERROR............", error)
       toast.error("Signup Failed")
       navigate("/signup")
     }
